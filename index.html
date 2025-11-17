@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antesala Reservaciones - DEMO VERSION (Portfolio Showcase)</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" 
+            onerror="console.error('Failed to load jsPDF library from CDN'); window.jspdfLoadError = true;"
+            onload="console.log('jsPDF library loaded successfully'); window.jspdfLoadSuccess = true;"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"
+            onerror="console.error('Failed to load jsPDF-autotable plugin from CDN'); window.jspdfAutotableLoadError = true;"
+            onload="console.log('jsPDF-autotable plugin loaded successfully'); window.jspdfAutotableLoadSuccess = true;"></script>
+    <!-- Firebase SDK - DISABLED IN DEMO VERSION -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script> -->
+    <script src="firebase-config.js"></script>
+</head>
+<body>
+    <!-- Demo Banner - Always visible in demo version -->
+    <div id="demo-banner" class="demo-banner">
+        <div class="demo-banner-content">
+            <i class="fas fa-info-circle"></i>
+            <span><strong>DEMO MODE:</strong> This is a demonstration version. <strong>ALL DATA IS FICTIONAL</strong> - no real client information is displayed. All data is stored locally and will not affect the production database. Sample reservations are provided for demonstration purposes only.</span>
+            <button class="demo-banner-close" id="demoBannerClose" aria-label="Close demo banner">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <img src="Logo_Antesala-removebg-preview.png" alt="LA ANTESALA" class="logo-image">
+                </div>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Panel Principal</span>
+                </li>
+                <li class="menu-item" data-section="new-reservation">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Nueva Reservación</span>
+                </li>
+                <li class="menu-item" data-section="reservations">
+                    <i class="fas fa-list"></i>
+                    <span>Reservaciones</span>
+                </li>
+                <li class="menu-item" data-section="calendar">
+                    <i class="fas fa-calendar"></i>
+                    <span>Calendario</span>
+                </li>
+                <li class="menu-item" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Análisis</span>
+                </li>
+            </ul>
+            <div class="dark-mode-toggle-container">
+                <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon"></i>
+                    <span>Modo Oscuro</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Mobile Menu Overlay -->
+        <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h1>Resumen del Panel</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showSection('new-reservation')">
+                            <i class="fas fa-plus"></i> Nueva Reservación
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalReservations">0</h3>
+                            <p>Total Reservations</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalRevenue">$0</h3>
+                            <p>Total Revenue</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalGuests">0</h3>
+                            <p>Total Guests</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="todayReservations">0</h3>
+                            <p>Today's Events</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Recent Reservations</h3>
+                        <div id="recentReservations" class="recent-list">
+                            <!-- Recent reservations will be populated here -->
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Upcoming Events</h3>
+                        <div id="upcomingEvents" class="upcoming-list">
+                            <!-- Upcoming events will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- New Reservation Section -->
+            <section id="new-reservation" class="content-section">
+                <div class="section-header">
+                    <h1>Crear Nueva Reservación</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="clearForm()">
+                            <i class="fas fa-eraser"></i> Limpiar Formulario
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-container">
+                    <form id="reservationForm" class="reservation-form" novalidate>
+                        <div class="form-grid">
+                            <!-- Client Information Card -->
+                            <div class="form-card">
+                                <div class="card-header">
+                                    <i class="fas fa-user"></i>
+                                    <h3>Información del Cliente</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="form-group">
+                                        <label for="clientName">Nombre del Cliente</label>
+                                        <input type="text" id="clientName" name="clientName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="clientEmail">Correo Electrónico</label>
+                                        <input type="email" id="clientEmail" name="clientEmail">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="clientPhone">Teléfono</label>
+                                        <input type="tel" id="clientPhone" name="clientPhone" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Event Details Card -->
+                            <div class="form-card">
+                                <div class="card-header">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <h3>Detalles del Evento</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="form-group">
+                                        <label for="eventDate">Fecha del Evento</label>
+                                        <input type="date" id="eventDate" name="eventDate" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="eventTime">Hora del Evento</label>
+                                        <input type="time" id="eventTime" name="eventTime" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="eventType">Tipo de Evento</label>
+                                        <select id="eventType" name="eventType">
+                                            <option value="">Seleccionar Tipo de Evento</option>
+                                            <option value="wedding">Boda</option>
+                                            <option value="birthdays">Cumpleaños</option>
+                                            <option value="pharmaceutical">Farmacéutico</option>
+                                            <option value="baptism">Bautismo</option>
+                                            <option value="graduation">Graduación</option>
+                                            <option value="fiesta-navidad">Fiesta de Navidad</option>
+                                            <option value="other">Otro</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group hidden" id="otherEventTypeGroup">
+                                        <label for="otherEventType">Especificar Tipo de Evento</label>
+                                        <input type="text" id="otherEventType" name="otherEventType" placeholder="Ingrese el tipo de evento">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="eventDuration">Duración (horas)</label>
+                                        <select id="eventDuration" name="eventDuration">
+                                            <option value="">Seleccionar Duración</option>
+                                            <option value="2">2 horas</option>
+                                            <option value="3">3 horas</option>
+                                            <option value="4">4 horas</option>
+                                            <option value="5">5 horas</option>
+                                            <option value="6">6 horas</option>
+                                            <option value="8">8 horas</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="companyName">Nombre de Compania</label>
+                                        <input type="text" id="companyName" name="companyName" placeholder="Nombre de la compañía">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Room & Guests Card -->
+                            <div class="form-card">
+                                <div class="card-header">
+                                    <i class="fas fa-building"></i>
+                                    <h3>Espacio e Invitados</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="form-group">
+                                        <label for="roomType">Espacio para Evento</label>
+                                        <select id="roomType" name="roomType" required>
+                                            <option value="">Seleccionar Espacio</option>
+                                            <option value="grand-hall" data-price="0">Salon 1</option>
+                                            <option value="intimate-room" data-price="0">Salon 2</option>
+                                            <option value="outdoor-terrace" data-price="0">Salon 3</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="guestCount">Número de Invitados</label>
+                                        <div class="guest-count-container">
+                                            <input type="range" id="guestCount" name="guestCount" min="10" max="200" step="10" value="50">
+                                            <div class="guest-count-display">
+                                                <span id="guestCountValue">50</span> invitados
+                                            </div>
+                                            <div class="guest-count-labels">
+                                                <span>10</span>
+                                                <span>200</span>
+                                            </div>
+                                            <div class="guest-count-input">
+                                                <label for="guestCountManual">O ingrese el número exacto:</label>
+                                                <input type="number" id="guestCountManual" name="guestCountManual" min="0" max="500" value="50" placeholder="Ingrese número de invitados">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Food & Beverage Card -->
+                            <div class="form-card">
+                                <div class="card-header">
+                                    <i class="fas fa-utensils"></i>
+                                    <h3>Comida y Bebidas</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="form-group">
+                                        <label for="foodType">Servicio de Comida</label>
+                                        <select id="foodType" name="foodType">
+                                            <option value="">Seleccionar Servicio de Comida</option>
+                                            <option value="buffet-20" data-price="20">Buffet - $20 por persona</option>
+                                            <option value="buffet-23" data-price="23">Buffet - $23 por persona</option>
+                                            <option value="buffet-25" data-price="25">Buffet - $25 por persona</option>
+                                            <option value="buffet-30" data-price="30">Buffet - $30 por persona</option>
+                                            <option value="buffet-35" data-price="35">Buffet - $35 por persona</option>
+                                            <option value="individual-plates" data-price="35">Platos Individuales</option>
+                                            <option value="no-food" data-price="0">Sin Servicio de Comida</option>
+                                        </select>
+                                    </div>
+                                    <div id="foodServiceSummary" class="food-summary"></div>
+                                    <button type="button" id="editBuffetBtn" class="btn btn-outline hidden">Editar Opciones de Buffet</button>
+                                    <div class="form-group form-group-spacing-top">
+                                        <label></label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="breakfastType">Desayuno</label>
+                                        <select id="breakfastType" name="breakfastType">
+                                            <option value="">Sin Desayuno</option>
+                                            <option value="desayuno-9.95" data-price="9.95">Desayuno - $9.95</option>
+                                            <option value="desayuno-10.95" data-price="10.95">Desayuno - $10.95</option>
+                                        </select>
+                                    </div>
+                                    <div id="breakfastServiceSummary" class="food-summary"></div>
+                                    <button type="button" id="editBreakfastBtn" class="btn btn-outline hidden">Editar Opciones de Desayuno</button>
+                                    <div class="form-group form-group-spacing-top">
+                                        <label for="dessertType">Postres</label>
+                                        <select id="dessertType" name="dessertType">
+                                            <option value="">Sin Postres</option>
+                                            <option value="postres" data-price="0">Postres</option>
+                                        </select>
+                                    </div>
+                                    <div id="dessertServiceSummary" class="food-summary"></div>
+                                    <button type="button" id="editDessertBtn" class="btn btn-outline hidden">Editar Opciones de Postres</button>
+                                    <div class="form-group form-group-spacing-top">
+                                        <label>Bebidas</label>
+                                    </div>
+                                    <div id="beverageSummary" class="food-summary hidden"></div>
+                                    <button type="button" id="openBeverageModalBtn" class="btn btn-outline">Seleccionar Bebidas</button>
+                                    <button type="button" id="editBeveragesBtn" class="btn btn-outline hidden">Editar Bebidas</button>
+                                    <div class="form-group">
+                                        <label>Entremeses</label>
+                                    </div>
+                                    <div id="entremesesSummary" class="food-summary hidden"></div>
+                                    <button type="button" id="openEntremesesModalBtn" class="btn btn-outline">Seleccionar Entremeses</button>
+                                    <button type="button" id="editEntremesesBtn" class="btn btn-outline hidden">Editar Entremeses</button>
+                                </div>
+                            </div>
+
+                            <!-- Additional Services Card -->
+                            <div class="form-card">
+                                <div class="card-header">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <h3>Servicios Adicionales</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="audioVisual" name="audioVisual" data-price="0">
+                                            <span class="checkmark"></span>
+                                            Manteles
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="sillas" name="sillas" data-price="0">
+                                            <span class="checkmark"></span>
+                                            Sillas
+                                        </label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="mesas" name="mesas" data-price="0">
+                                            <span class="checkmark"></span>
+                                            Mesas
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pricing Summary Card -->
+                            <div class="form-card pricing-card">
+                                <div class="card-header">
+                                    <i class="fas fa-calculator"></i>
+                                    <h3>Resumen de Precios</h3>
+                                </div>
+                                <div class="card-content">
+                                    <div class="pricing-breakdown">
+                                        <div class="pricing-item">
+                                            <span>Espacio del Evento:</span>
+                                            <span id="roomCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Servicio de Comida:</span>
+                                            <span id="foodCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Desayuno:</span>
+                                            <span id="breakfastCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Servicio de Bebidas:</span>
+                                            <span id="drinkCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Entremeses:</span>
+                                            <span id="entremesesCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Servicios Adicionales:</span>
+                                            <span id="additionalCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Impuesto Estatal Reducido 6% (Comida):</span>
+                                            <span id="foodStateReducedTax">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Impuesto Municipal 1% (Comida):</span>
+                                            <span id="foodCityTax">$0</span>
+                                        </div>
+                                        <div class="pricing-item" id="alcoholTaxRow">
+                                            <span>Impuesto Estatal de Alcohol 10.5%:</span>
+                                            <span id="alcoholStateTax">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <span>Subtotal de Impuestos:</span>
+                                            <span id="taxSubtotal">$0</span>
+                                        </div>
+                                        <div class="pricing-item">
+                                            <label for="tipPercentage" class="tip-label">Propina:</label>
+                                            <select id="tipPercentage" name="tipPercentage" class="tip-select">
+                                                <option value="0">Sin Propina</option>
+                                                <option value="15">15%</option>
+                                                <option value="18">18%</option>
+                                                <option value="20">20%</option>
+                                            </select>
+                                            <span id="tipAmount" class="tip-amount">$0.00</span>
+                                        </div>
+                                        <div class="pricing-item total">
+                                            <span>Costo Total:</span>
+                                            <span id="totalCost">$0</span>
+                                        </div>
+                                        <div class="pricing-item deposit">
+                                            <label for="depositPercentage" class="tip-label">Depósito:</label>
+                                            <select id="depositPercentage" name="depositPercentage" class="tip-select">
+                                                <option value="0">Sin Depósito</option>
+                                                <option value="10">10%</option>
+                                                <option value="15">15%</option>
+                                                <option value="20" selected>20%</option>
+                                                <option value="25">25%</option>
+                                                <option value="30">30%</option>
+                                                <option value="50">50%</option>
+                                            </select>
+                                            <span id="depositAmount" class="tip-amount">$0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="button" id="calculateBtn" class="btn btn-secondary">
+                                            <i class="fas fa-calculator"></i> Calcular Precio
+                                        </button>
+                                        <button type="submit" id="saveBtn" class="btn btn-primary">
+                                            <i class="fas fa-save"></i> Guardar Reservación
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- All Reservations Section -->
+            <section id="reservations" class="content-section">
+                <div class="section-header">
+                    <h1>Todas las Reservaciones</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="exportReservations()">
+                            <i class="fas fa-download"></i> Exportar
+                        </button>
+                    </div>
+                </div>
+                <div id="reservationsContainer" class="reservations-grid">
+                    <!-- Reservations will be dynamically added here -->
+                </div>
+            </section>
+
+            <!-- Calendar View Section -->
+            <section id="calendar" class="content-section">
+                <div class="section-header">
+                    <h1>Vista de Calendario</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="showSection('new-reservation')">
+                            <i class="fas fa-plus"></i> Nueva Reservación
+                        </button>
+                    </div>
+                </div>
+                <div class="calendar-container">
+                    <div class="calendar-navigation">
+                        <button class="btn btn-outline" onclick="previousMonth()" id="prevMonthBtn">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <h2 id="calendarMonthYear">Current Month</h2>
+                        <button class="btn btn-outline" onclick="nextMonth()" id="nextMonthBtn">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="calendarView" class="calendar-grid">
+                        <!-- Calendar will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics" class="content-section">
+                <div class="section-header">
+                    <h1>Análisis e Informes</h1>
+                </div>
+                <div class="analytics-grid">
+                    <div class="analytics-card">
+                        <h3>Revenue by Month</h3>
+                        <div id="revenueChart" class="chart-placeholder">
+                            <p>Revenue chart will be displayed here</p>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Popular Event Spaces</h3>
+                        <div id="roomStats" class="stats-list">
+                            <!-- Room statistics will be populated here -->
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h3>Average Event Size</h3>
+                        <div id="guestStats" class="stats-display">
+                            <!-- Guest statistics will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Buffet Options Modal -->
+    <div id="buffetModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Buffet Options</h3>
+                <button type="button" class="modal-close" id="buffetCloseBtn" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="buffetRice">Arroz (Escoger 1)</label>
+                    <select id="buffetRice" name="buffetRice">
+                        <option value="">Seleccione arroz</option>
+                        <option value="cebolla">Arroz Cebolla</option>
+                        <option value="cilantro">Arroz Cilantro</option>
+                        <option value="mamposteado">Arroz Mamposteado</option>
+                        <option value="consomme">Arroz Consommé</option>
+                        <option value="griego">Arroz Griego</option>
+                        <option value="gandules">Arroz con Gandules</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="buffetRice2">Segundo Arroz (Opcional)</label>
+                    <select id="buffetRice2" name="buffetRice2">
+                        <option value="">Seleccione segundo arroz (opcional)</option>
+                        <option value="cebolla">Arroz Cebolla</option>
+                        <option value="cilantro">Arroz Cilantro</option>
+                        <option value="mamposteado">Arroz Mamposteado</option>
+                        <option value="consomme">Arroz Consommé</option>
+                        <option value="griego">Arroz Griego</option>
+                        <option value="gandules">Arroz con Gandules</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Proteínas (Escoger 1 o 2)</label>
+                    <div class="protein-grid">
+                        <select id="buffetProtein1" name="buffetProtein1" aria-label="Proteína 1">
+                            <option value="">Proteína 1</option>
+                            <option value="pechuga-cilantro">Pechuga salsa Cilantro</option>
+                            <option value="pechuga-tres-quesos">Pechuga tres quesos</option>
+                            <option value="pechuga-ajillo">Pechuga Ajillo</option>
+                            <option value="pavo-cranberry">Filete de pavo salsa a escoger</option>
+                            <option value="medallones-guayaba">Medallones Cerdo salsa Guayaba</option>
+                            <option value="medallones-guayaba">Medallones Cerdo salsa Setas</option>
+                            <option value="pernil-asado">Pernil Asado</option>
+                            <option value="pescado-ajillo">Filete de Pescado Ajillo</option>
+                            <option value="churrasco-setas">Churrasco salsa setas</option>
+                        </select>
+                        <select id="buffetProtein2" name="buffetProtein2" aria-label="Proteína 2 (Opcional)">
+                            <option value="">Proteína 2 </option>
+                            <option value="pechuga-cilantro">Pechuga salsa Cilantro</option>
+                            <option value="pechuga-tres-quesos">Pechuga tres quesos</option>
+                            <option value="pechuga-ajillo">Pechuga Ajillo</option>
+                            <option value="pavo-cranberry">Filete de pavo salsa a escoger</option>
+                            <option value="medallones-guayaba">Medallones Cerdo salsa Guayaba</option>
+                            <option value="medallones-guayaba">Medallones Cerdo salsa Setas</option>
+                            <option value="pernil-asado">Pernil Asado</option>
+                            <option value="pescado-ajillo">Filete de Pescado Ajillo</option>
+                            <option value="churrasco-setas">Churrasco salsa setas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="buffetSide">Complementos (Escoger 1)</label>
+                    <select id="buffetSide" name="buffetSide">
+                        <option value="">Seleccione complemento</option>
+                        <option value="papas-leonesa">Papas Leonesa</option>
+                        <option value="papas-salteadas">Papas salteadas</option>
+                        <option value="ensalada-papa">Ensalada Papa</option>
+                        <option value="ensalada-coditos">Ensalada de coditos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ensalada (Escoger 1 o 2)</label>
+                    <div class="protein-grid">
+                        <select id="buffetSalad" name="buffetSalad" aria-label="Ensalada 1">
+                            <option value="">Ensalada 1</option>
+                            <option value="caesar">Ensalada Ceasar</option>
+                            <option value="verde">Ensalada Verde</option>
+                            <option value="papa">Ensalada de Papa</option>
+                            <option value="coditos">Ensalada de Coditos</option>
+                        </select>
+                        <select id="buffetSalad2" name="buffetSalad2" aria-label="Ensalada 2 (Opcional)">
+                            <option value="">Ensalada 2</option>
+                            <option value="caesar">Ensalada Ceasar</option>
+                            <option value="verde">Ensalada Verde</option>
+                            <option value="papa">Ensalada de Papa</option>
+                            <option value="coditos">Ensalada de Coditos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="buffetPanecillos" name="buffetPanecillos">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Panecillos</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="buffetAguaRefresco" name="buffetAguaRefresco">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Agua y/o Refresco</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="buffetPasteles" name="buffetPasteles">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Pasteles</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="buffetClearBtn">Limpiar Todo</button>
+                <button type="button" class="btn btn-outline" id="buffetCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="buffetSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Breakfast Options Modal -->
+    <div id="breakfastModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Breakfast Options</h3>
+                <button type="button" class="modal-close" id="breakfastCloseBtn" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="breakfastCafe" name="breakfastCafe">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Café</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="breakfastJugo" name="breakfastJugo">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Jugo</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="breakfastAvena" name="breakfastAvena">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Avena</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="breakfastWrapJamonQueso" name="breakfastWrapJamonQueso">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Wrap de Jamón y Queso</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="breakfastBocadilloJamonQueso" name="breakfastBocadilloJamonQueso">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Bocadillo de Jamón y Queso</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="breakfastClearBtn">Limpiar Todo</button>
+                <button type="button" class="btn btn-outline" id="breakfastCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="breakfastSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dessert Options Modal -->
+    <div id="dessertModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Opciones de Postres</h3>
+                <button type="button" class="modal-close" id="dessertCloseBtn" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertFlanQueso" name="dessertFlanQueso">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Flan de Queso</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertFlanVainilla" name="dessertFlanVainilla">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Flan de Vainilla</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertFlanCoco" name="dessertFlanCoco">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Flan de Coco</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertCheesecake" name="dessertCheesecake">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Cheesecake</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertBizcochoChocolate" name="dessertBizcochoChocolate">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Bizcocho de Chocolate</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertBizcochoZanahoria" name="dessertBizcochoZanahoria">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Bizcocho de Zanahoria</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertTresLeches" name="dessertTresLeches">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Tres Leches</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertTembleque" name="dessertTembleque">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Tembleque</span>
+                    </label>
+                </div>
+                <div class="form-group panecillos-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="dessertPostresSurtidos" name="dessertPostresSurtidos">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Postres Surtidos</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="dessertClearBtn">Limpiar Todo</button>
+                <button type="button" class="btn btn-outline" id="dessertCancelBtn">Cancel</button>
+                <button type="button" class="btn btn-primary" id="dessertSaveBtn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Beverages Modal -->
+    <div id="beverageModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Seleccionar Bebidas</h3>
+                <button type="button" class="modal-close" id="beverageCloseBtn" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body">
+                <details class="accordion">
+                    <summary class="accordion-summary">Cervezas</summary>
+                    <div class="accordion-content">
+                        <div class="protein-grid">
+                            <div>
+                                <label for="bev-michelob">Michelob ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-michelob">−</button>
+                                    <input type="number" id="bev-michelob" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-michelob">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-medalla">Medalla ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-medalla">−</button>
+                                    <input type="number" id="bev-medalla" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-medalla">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-heineken">Heineken ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-heineken">−</button>
+                                    <input type="number" id="bev-heineken" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-heineken">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-coors">Coors Light ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-coors">−</button>
+                                    <input type="number" id="bev-coors" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-coors">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-corona">Corona ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-corona">−</button>
+                                    <input type="number" id="bev-corona" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-corona">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-modelo">Modelo ($72)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-modelo">−</button>
+                                    <input type="number" id="bev-modelo" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-modelo">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="accordion">
+                    <summary class="accordion-summary">Licores</summary>
+                    <div class="accordion-content">
+                        <div id="liquorsContainer" class="protein-grid">
+                            <div>
+                                <label for="bev-black-label-1l">1 Litro Black Label ($65)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-black-label-1l">−</button>
+                                    <input type="number" id="bev-black-label-1l" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-black-label-1l">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-tito-1l">1 Litro Tito Vodka ($45)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-tito-1l">−</button>
+                                    <input type="number" id="bev-tito-1l" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-tito-1l">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-dewars-12-handle">Gancho Dewars 12 ($200)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-dewars-12-handle">−</button>
+                                    <input type="number" id="bev-dewars-12-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-dewars-12-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-dewars-handle">Gancho Dewars Reg. ($150)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-dewars-handle">−</button>
+                                    <input type="number" id="bev-dewars-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-dewars-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-cristal-handle">Gancho Don Q Cristal ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-cristal-handle">−</button>
+                                    <input type="number" id="bev-donq-cristal-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-cristal-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-limon-handle">Gancho Don Q Limón ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-limon-handle">−</button>
+                                    <input type="number" id="bev-donq-limon-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-limon-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-passion-handle">Gancho Don Q Passion ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-passion-handle">−</button>
+                                    <input type="number" id="bev-donq-passion-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-passion-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-coco-handle">Gancho Don Q Coco ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-coco-handle">−</button>
+                                    <input type="number" id="bev-donq-coco-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-coco-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-naranja-handle">Gancho Don Q Naranja ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-naranja-handle">−</button>
+                                    <input type="number" id="bev-donq-naranja-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-naranja-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-donq-oro-handle">Gancho Don Q Oro ($75)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-donq-oro-handle">−</button>
+                                    <input type="number" id="bev-donq-oro-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-donq-oro-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-tito-handle">Gancho Tito Vodka ($150)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-tito-handle">−</button>
+                                    <input type="number" id="bev-tito-handle" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-tito-handle">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-sangria">Jarra de Sangria ($25)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-sangria">−</button>
+                                    <input type="number" id="bev-sangria" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-sangria">+</button>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                </details>
+
+                <details class="accordion">
+                    <summary class="accordion-summary">Vinos</summary>
+                    <div class="accordion-content">
+                        <div class="protein-grid">
+                            <div>
+                                <label for="bev-red-wine-25">Botella de Vino Tinto ($25)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-red-wine-25">−</button>
+                                    <input type="number" id="bev-red-wine-25" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-red-wine-25">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-red-wine-30">Botella de Vino Tinto ($30)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-red-wine-30">−</button>
+                                    <input type="number" id="bev-red-wine-30" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-red-wine-30">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-red-wine-35-1">Botella de Vino Tinto ($35)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-red-wine-35-1">−</button>
+                                    <input type="number" id="bev-red-wine-35-1" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-red-wine-35-1">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-red-wine-35-2">Botella de Vino Tinto ($35)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-red-wine-35-2">−</button>
+                                    <input type="number" id="bev-red-wine-35-2" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-red-wine-35-2">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-red-wine-40">Botella de Vino Tinto ($40)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-red-wine-40">−</button>
+                                    <input type="number" id="bev-red-wine-40" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-red-wine-40">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-white-wine-25">Botella de Vino Blanco ($25)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-white-wine-25">−</button>
+                                    <input type="number" id="bev-white-wine-25" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-white-wine-25">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-white-wine-30">Botella de Vino Blanco ($30)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-white-wine-30">−</button>
+                                    <input type="number" id="bev-white-wine-30" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-white-wine-30">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-white-wine-35-1">Botella de Vino Blanco ($35)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-white-wine-35-1">−</button>
+                                    <input type="number" id="bev-white-wine-35-1" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-white-wine-35-1">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-white-wine-35-2">Botella de Vino Blanco ($35)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-white-wine-35-2">−</button>
+                                    <input type="number" id="bev-white-wine-35-2" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-white-wine-35-2">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-white-wine-40">Botella de Vino Blanco ($40)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-white-wine-40">−</button>
+                                    <input type="number" id="bev-white-wine-40" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-white-wine-40">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-descorche">Descorche</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-descorche">−</button>
+                                    <input type="number" id="bev-descorche" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-descorche">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="accordion">
+                    <summary class="accordion-summary">No Alcohólicas</summary>
+                    <div class="accordion-content">
+                        <div class="protein-grid">
+                            <div>
+                                <label for="bev-soft-drinks">Caja de Refrescos (24) ($35)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-soft-drinks">−</button>
+                                    <input type="number" id="bev-soft-drinks" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-soft-drinks">+</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label for="bev-water">Caja de Agua (24) ($20)</label>
+                                <div class="quantity-selector">
+                                    <button type="button" class="quantity-btn quantity-minus" data-beverage="bev-water">−</button>
+                                    <input type="number" id="bev-water" min="0" value="0" readonly>
+                                    <button type="button" class="quantity-btn quantity-plus" data-beverage="bev-water">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
+                <div class="form-group entremeses-asopao-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="bev-mimosa" name="bev-mimosa">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Mimosa ($3.95 por persona)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="beverageClearBtn">Limpiar Todo</button>
+                <button type="button" class="btn btn-outline" id="beverageCancelBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="beverageSaveBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entremeses Modal -->
+    <div id="entremesesModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Seleccionar Entremeses</h3>
+                <button type="button" class="modal-close" id="entremesesCloseBtn" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="protein-grid">
+                    <div>
+                        <label for="entr-bandeja-surtido">Bandeja de Surtido ($100)</label>
+                        <div class="quantity-selector">
+                            <button type="button" class="quantity-btn quantity-minus" data-entremes="entr-bandeja-surtido">−</button>
+                            <input type="number" id="entr-bandeja-surtido" min="0" value="0" readonly>
+                            <button type="button" class="quantity-btn quantity-plus" data-entremes="entr-bandeja-surtido">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="entr-media-bandeja">Media Bandeja de Surtidos ($50)</label>
+                        <div class="quantity-selector">
+                            <button type="button" class="quantity-btn quantity-minus" data-entremes="entr-media-bandeja">−</button>
+                            <input type="number" id="entr-media-bandeja" min="0" value="0" readonly>
+                            <button type="button" class="quantity-btn quantity-plus" data-entremes="entr-media-bandeja">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="entr-bandeja-cortes-frios">Bandeja Cortes Frios ($150)</label>
+                        <div class="quantity-selector">
+                            <button type="button" class="quantity-btn quantity-minus" data-entremes="entr-bandeja-cortes-frios">−</button>
+                            <input type="number" id="entr-bandeja-cortes-frios" min="0" value="0" readonly>
+                            <button type="button" class="quantity-btn quantity-plus" data-entremes="entr-bandeja-cortes-frios">+</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="entr-platos-entremeses">Platos de Entremeses ($20)</label>
+                        <div class="quantity-selector">
+                            <button type="button" class="quantity-btn quantity-minus" data-entremes="entr-platos-entremeses">−</button>
+                            <input type="number" id="entr-platos-entremeses" min="0" value="0" readonly>
+                            <button type="button" class="quantity-btn quantity-plus" data-entremes="entr-platos-entremeses">+</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group entremeses-asopao-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="entr-asopao" name="entr-asopao">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Asopao ($3.00 por persona)</span>
+                    </label>
+                </div>
+                <div class="form-group entremeses-asopao-group">
+                    <label class="panecillos-label">
+                        <input type="checkbox" id="entr-ceviche" name="entr-ceviche">
+                        <span class="check-box"></span>
+                        <span class="panecillos-text">Ceviche ($3.95 por persona)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="entremesesClearBtn">Limpiar Todo</button>
+                <button type="button" class="btn btn-outline" id="entremesesCancelBtn">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="entremesesSaveBtn">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Details Modal -->
+    <div id="reservationDetailsModal" class="modal-overlay hidden">
+        <div class="modal reservation-details-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-calendar-check"></i> Detalles de la Reservación</h3>
+                <button type="button" class="modal-close" id="reservationDetailsCloseBtn" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body" id="reservationDetailsBody">
+                <!-- Reservation details will be populated here -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" id="reservationDetailsCloseBtn2">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Validation Error Modal -->
+    <div id="validationErrorModal" class="modal-overlay hidden">
+        <div class="modal validation-modal">
+            <div class="modal-header validation-header">
+                <h3><i class="fas fa-exclamation-triangle"></i> Campos Requeridos Faltantes</h3>
+                <button type="button" class="modal-close" id="validationErrorCloseBtn" aria-label="Cerrar">×</button>
+            </div>
+            <div class="modal-body validation-body">
+                <p class="validation-message">Por favor complete los siguientes campos antes de guardar:</p>
+                <ul id="missingFieldsList" class="missing-fields-list"></ul>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary" id="validationErrorOkBtn">Entendido</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
